@@ -4,22 +4,41 @@ extern crate serde_json;
 extern crate failure;
 use serde_json::json;
 use failure::format_err;
+use std::net::IpAddr;
+use std::str::FromStr;
 use std::env;
 
-pub fn get_external_ipv6() -> Result<std::string::String, reqwest::Error> {
-    // Allows users to optionally configure which endpoints are used, with a sensible default.
-    let api_endpoint = env::var("CLOUDFLAREDDNS_IPV6_API_ENDPOINT").unwrap_or("https://api6.ipify.org".to_string());
+pub fn get_external_ip(api_endpoint: &str) -> Result<std::string::String, failure::Error> {
+    let client = reqwest::blocking::Client::new();
     
-    let response = reqwest::blocking::get(&api_endpoint).unwrap().text();
-    return response
+    let res = client.get(api_endpoint).send()?;
+
+    if res.status().is_success() {
+        let body = res.text().unwrap();
+        let ip = IpAddr::from_str(&body);
+        
+        if let Ok(ip) = ip { // If parsing succeeded, return the IP address
+            return Ok(body);
+        } else { // If parsing failed, return an error
+            println!("Error: {} is not a valid IP address.", body);
+            return Err(format_err!("Error: {} is not a valid IP address.", body));
+        }
+
+    } else {
+        return Err(format_err!("Error: Retrieving the IP address API endpoint failed: {}", res.error_for_status().unwrap_err()))
+    }
 }
 
-pub fn get_external_ipv4() -> Result<std::string::String, reqwest::Error> {
+pub fn get_external_ipv6() -> Result<std::string::String, failure::Error> {
+    // Allows users to optionally configure which endpoints are used, with a sensible default.
+    let api_endpoint = env::var("CLOUDFLAREDDNS_IPV6_API_ENDPOINT").unwrap_or("https://api6.ipify.org".to_string());
+    return get_external_ip(&api_endpoint);
+}
+
+pub fn get_external_ipv4() -> Result<std::string::String, failure::Error> {
     // Allows users to optionally configure which endpoints are used, with a sensible default.
     let api_endpoint = env::var("CLOUDFLAREDDNS_IPV4_API_ENDPOINT").unwrap_or("https://api.ipify.org".to_string());
-    
-    let response = reqwest::blocking::get(&api_endpoint).unwrap().text();
-    return response
+    return get_external_ip(&api_endpoint);
 }
 
 fn get_zone_id(user: &str, api_key: &str, zone_name: &str) -> Result<String, reqwest::Error> {
@@ -143,8 +162,8 @@ fn main() -> Result<(), failure::Error> {
     let hosts_len = hosts_vec.len();
     let zones_len = zones_vec.len();
     let external_ipv4 = if ipv4 { get_external_ipv4()? } else { "unused".to_owned() };
-    let external_ipv6 = if ipv6 { get_external_ipv6()? } else { "unused".to_owned() };
     println!("External IPv4 address: {}", external_ipv4);
+    let external_ipv6 = if ipv6 { get_external_ipv6()? } else { "unused".to_owned() };
     println!("External IPv6 address: {}", external_ipv6);
 
     // If the lengths of hosts and zones not equal, return an error.
