@@ -7,6 +7,7 @@ use serde_json::json;
 use std::env;
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::time::Duration;
 
 pub fn get_external_ip(api_endpoint: &str) -> Result<std::string::String, failure::Error> {
     let client = reqwest::blocking::Client::new();
@@ -178,26 +179,15 @@ fn create_or_update_record(
     }
 }
 
-fn main() -> Result<(), failure::Error> {
-    let user = std::env::var("CLOUDFLAREDDNS_USER")
-        .expect("CLOUDFLAREDDNS_USER environment variable not set");
-    let api_key = std::env::var("CLOUDFLAREDDNS_APIKEY")
-        .expect("CLOUDFLAREDDNS_APIKEY environment variable not set");
-    let record_types = std::env::var("CLOUDFLAREDDNS_RECORDTYPES")
-        .expect("CLOUDFLAREDDNS_RECORDTYPES environment variable not set");
-    let record_type_values = record_types.split(";").collect::<Vec<_>>();
-    let ipv4 = record_type_values.contains(&"A");
-    let ipv6 = record_type_values.contains(&"AAAA");
-    // host and zones as parallel arrays with elements at the same index expected to go together
-    let hosts = std::env::var("CLOUDFLAREDDNS_HOSTS")
-        .expect("CLOUDFLAREDDNS_HOSTS environment variable not set");
-    let zones = std::env::var("CLOUDFLAREDDNS_ZONES")
-        .expect("CLOUDFLAREDDNS_ZONES environment variable not set");
-    // Split the hosts and zones strings on the semicolon character into vectors.
-    let hosts_vec = hosts.split(";").collect::<Vec<_>>();
-    let zones_vec = zones.split(";").collect::<Vec<_>>();
-    let hosts_len = hosts_vec.len();
-    let zones_len = zones_vec.len();
+fn check_ips_and_update_dns(
+    user: &str,
+    api_key: &str,
+    hosts_vec: &Vec<&str>,
+    zones_vec: &Vec<&str>,
+    ipv4: bool,
+    ipv6: bool,
+) -> Result<(), failure::Error> {
+
     let external_ipv4 = if ipv4 {
         get_external_ipv4()?
     } else {
@@ -210,19 +200,6 @@ fn main() -> Result<(), failure::Error> {
         "unused".to_owned()
     };
     println!("External IPv6 address: {}", external_ipv6);
-
-    // If the lengths of hosts and zones not equal, return an error.
-    if hosts_len != zones_len {
-        return Err(format_err!(
-            "Error: hosts and zones have different lengths. These need to match"
-        ));
-    } else if hosts_len == 0 || zones_len == 0 {
-        return Err(format_err!("Error: hosts and zones must both be provided."));
-    } else if hosts.trim().is_empty() || zones.trim().is_empty() {
-        return Err(format_err!(
-            "Error: hosts and zones must both not be empty."
-        ));
-    }
 
     // Iterate over an enumerated value of a tuple of the matching host and zone
     for (host, zone) in hosts_vec.iter().zip(zones_vec.iter()) {
@@ -250,6 +227,50 @@ fn main() -> Result<(), failure::Error> {
             }
         }
     }
+
+    Ok(())
+}
+
+fn main() -> Result<(), failure::Error> {
+    let user = std::env::var("CLOUDFLAREDDNS_USER")
+        .expect("CLOUDFLAREDDNS_USER environment variable not set");
+    let api_key = std::env::var("CLOUDFLAREDDNS_APIKEY")
+        .expect("CLOUDFLAREDDNS_APIKEY environment variable not set");
+    let record_types = std::env::var("CLOUDFLAREDDNS_RECORDTYPES")
+        .expect("CLOUDFLAREDDNS_RECORDTYPES environment variable not set");
+    // Get repeat interval, with a default value of 0, which runs only once.
+    let repeat_interval = std::env::var("REPEAT_INTERVAL").unwrap_or("0".to_string());
+    // Parse this string value into a 32-bit unsigned integer.
+    let repeat_interval: u32 = repeat_interval.parse().unwrap_or(0);
+    let record_type_values = record_types.split(";").collect::<Vec<_>>();
+    let ipv4 = record_type_values.contains(&"A");
+    let ipv6 = record_type_values.contains(&"AAAA");
+    // host and zones as parallel arrays with elements at the same index expected to go together
+    let hosts = std::env::var("CLOUDFLAREDDNS_HOSTS")
+        .expect("CLOUDFLAREDDNS_HOSTS environment variable not set");
+    let zones = std::env::var("CLOUDFLAREDDNS_ZONES")
+        .expect("CLOUDFLAREDDNS_ZONES environment variable not set");
+    // Split the hosts and zones strings on the semicolon character into vectors.
+    let hosts_vec = hosts.split(";").collect::<Vec<_>>();
+    let zones_vec = zones.split(";").collect::<Vec<_>>();
+    let hosts_len = hosts_vec.len();
+    let zones_len = zones_vec.len();
+
+    // If the lengths of hosts and zones not equal, return an error.
+    if hosts_vec.len() != zones_vec.len() {
+        return Err(format_err!(
+            "Error: hosts and zones have different lengths. These need to match"
+        ));
+    } else if hosts_vec.len() == 0 || zones_vec.len() == 0 {
+        return Err(format_err!("Error: hosts and zones must both be provided."));
+    } else if hosts_vec.is_empty() || zones_vec.is_empty() {
+        return Err(format_err!(
+            "Error: hosts and zones must both not be empty."
+        ));
+    }
+    
+  
+    check_ips_and_update_dns(&user, &api_key, &hosts_vec, &zones_vec, ipv4, ipv6)?;
 
     Ok(())
 }
