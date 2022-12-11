@@ -7,6 +7,7 @@ use serde_json::json;
 use std::env;
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::thread;
 use std::time::Duration;
 
 pub fn get_external_ip(api_endpoint: &str) -> Result<std::string::String, failure::Error> {
@@ -18,7 +19,7 @@ pub fn get_external_ip(api_endpoint: &str) -> Result<std::string::String, failur
         let body = res.text().unwrap();
         let ip = IpAddr::from_str(&body);
 
-        if let Ok(ip) = ip {
+        if let Ok(_ip) = ip {
             // If parsing succeeded, return the IP address
             return Ok(body);
         } else {
@@ -187,7 +188,6 @@ fn check_ips_and_update_dns(
     ipv4: bool,
     ipv6: bool,
 ) -> Result<(), failure::Error> {
-
     let external_ipv4 = if ipv4 {
         get_external_ipv4()?
     } else {
@@ -239,9 +239,9 @@ fn main() -> Result<(), failure::Error> {
     let record_types = std::env::var("CLOUDFLAREDDNS_RECORDTYPES")
         .expect("CLOUDFLAREDDNS_RECORDTYPES environment variable not set");
     // Get repeat interval, with a default value of 0, which runs only once.
-    let repeat_interval = std::env::var("REPEAT_INTERVAL").unwrap_or("0".to_string());
-    // Parse this string value into a 32-bit unsigned integer.
-    let repeat_interval: u32 = repeat_interval.parse().unwrap_or(0);
+    let repeat_interval = std::env::var("CLOUDFLAREDDNS_REPEAT_INTERVAL").unwrap_or("0".to_string());
+    // Parse this string value into a 64-bit unsigned integer.
+    let repeat_interval: u64 = repeat_interval.parse().unwrap_or(0);
     let record_type_values = record_types.split(";").collect::<Vec<_>>();
     let ipv4 = record_type_values.contains(&"A");
     let ipv6 = record_type_values.contains(&"AAAA");
@@ -253,8 +253,6 @@ fn main() -> Result<(), failure::Error> {
     // Split the hosts and zones strings on the semicolon character into vectors.
     let hosts_vec = hosts.split(";").collect::<Vec<_>>();
     let zones_vec = zones.split(";").collect::<Vec<_>>();
-    let hosts_len = hosts_vec.len();
-    let zones_len = zones_vec.len();
 
     // If the lengths of hosts and zones not equal, return an error.
     if hosts_vec.len() != zones_vec.len() {
@@ -268,9 +266,14 @@ fn main() -> Result<(), failure::Error> {
             "Error: hosts and zones must both not be empty."
         ));
     }
-    
-  
-    check_ips_and_update_dns(&user, &api_key, &hosts_vec, &zones_vec, ipv4, ipv6)?;
+
+    loop {
+        check_ips_and_update_dns(&user, &api_key, &hosts_vec, &zones_vec, ipv4, ipv6)?;
+        if !repeat_interval > 0 {
+            break;
+        }
+        thread::sleep(Duration::from_secs(repeat_interval));
+    }
 
     Ok(())
 }
