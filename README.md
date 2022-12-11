@@ -19,7 +19,7 @@ It will your external IP address(es), get the ID of the specified DNS zones, and
 * `CLOUDFLAREDDNS_RECORDTYPES`: A semicolon-separated list of record types to create/update. This can include `A`, `AAAA`, or both.
 * `CLOUDFLAREDDNS_HOSTS`: A semicolon-separated list of hostnames to update. This should be the name of the DNS record that you want to create/update in each zone.
 * `CLOUDFLAREDDNS_ZONES`: A semicolon-separated list of zone names to update. This should be the name of the DNS zone that contains the record that you want to update.
-* Optional: `CLOUDFLAREDDNS_IPV4_API_ENDPOINT`/`CLOUDFLAREDDNS_IPV6_API_ENDPOINT`: The API endpoint to use to obtain the current external IPv4/IPv6 address, respectively. By default, `ipify.org` is used.
+* Optional: `CLOUDFLAREDDNS_IPV4_API_ENDPOINT`/`CLOUDFLAREDDNS_IPV6_API_ENDPOINT`: The API endpoint to use to obtain the current external IPv4/IPv6 address, respectively. By default, CloudFlareDDNS uses the `https://api.ipify.org` and `https://api6.ipify.org` endpoints.
 
 Note that `CLOUDFLAREDDNS_HOSTS` and `CLOUDFLAREDDNS_ZONES` are parsed as parallel arrays. In other words, they must contain a matching number of elements,
 and each element's position in the variable should match the position of the corresponding element in the other variable.
