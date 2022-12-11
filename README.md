@@ -3,7 +3,7 @@
 This Rust program allows you to use the free CloudFlare DNS service as a dynamic DNS provider.
 It provides functions to get your external IPv4 and IPv6 addresses, get the ID of a DNS zone, and create or update a DNS record in that zone.
 
-This is a strongly inspired by hotio's excellent CloudFlareDDNS tool. Initially, I wrote to practice writing Rust code.
+This is a strongly inspired by [hotio's excellent CloudFlareDDNS tool](https://hotio.dev/containers/cloudflareddns/). Initially, I wrote this to practice writing Rust code.
 
 ## Usage
 To use this library, you will need a CloudFlare account and an API key.
