@@ -5,12 +5,12 @@ extern crate failure;
 use serde_json::json;
 use failure::format_err;
 
-fn get_external_ipv6() -> Result<std::string::String, reqwest::Error> {
+pub fn get_external_ipv6() -> Result<std::string::String, reqwest::Error> {
     let response = reqwest::blocking::get("https://api6.ipify.org").unwrap().text();
     return response
 }
 
-fn get_external_ipv4() -> Result<std::string::String, reqwest::Error> {
+pub fn get_external_ipv4() -> Result<std::string::String, reqwest::Error> {
     let response = reqwest::blocking::get("https://api.ipify.org").unwrap().text();
     return response
 }
