@@ -6,7 +6,7 @@ It provides functions to get your external IPv4 and IPv6 addresses, get the ID o
 This is a strongly inspired by [hotio's excellent CloudFlareDDNS tool](https://hotio.dev/containers/cloudflareddns/). Initially, I wrote this to practice writing Rust code.
 
 ## Usage
-To use this library, you will need a CloudFlare account and an API key.
+To use this program, you will need a CloudFlare account and an API key.
 You can find instructions for how to generate an API key in the [CloudFlare documentation](https://support.cloudflare.com/hc/en-us/articles/200167836-Where-do-I-find-my-Cloudflare-API-key-).
 
 Once you have an API key, you can set the environment variables to configure the program.
@@ -25,4 +25,4 @@ Note that `CLOUDFLAREDDNS_HOSTS` and `CLOUDFLAREDDNS_ZONES` are parsed as parall
 and each element's position in the variable should match the position of the corresponding element in the other variable.
 
 ## License
-This library is licensed under the GPLv3 license. See LICENSE for more information.
+This program is licensed under the GPLv3 license. See LICENSE for more information.
