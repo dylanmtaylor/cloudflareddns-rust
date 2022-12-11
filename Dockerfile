@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 # Install the necessary packages to build and run Rust programs
 RUN apt-get update && \
-    apt-get install -y curl build-essential libssl-dev 
+    apt-get install -y curl build-essential libssl-dev pkg-config
 
 # Get Rust
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
