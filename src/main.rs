@@ -4,14 +4,21 @@ extern crate serde_json;
 extern crate failure;
 use serde_json::json;
 use failure::format_err;
+use std::env;
 
 pub fn get_external_ipv6() -> Result<std::string::String, reqwest::Error> {
-    let response = reqwest::blocking::get("https://api6.ipify.org").unwrap().text();
+    // Allows users to optionally configure which endpoints are used, with a sensible default.
+    let api_endpoint = env::var("CLOUDFLAREDDNS_IPV6_API_ENDPOINT").unwrap_or("https://api6.ipify.org".to_string());
+    
+    let response = reqwest::blocking::get(&api_endpoint).unwrap().text();
     return response
 }
 
 pub fn get_external_ipv4() -> Result<std::string::String, reqwest::Error> {
-    let response = reqwest::blocking::get("https://api.ipify.org").unwrap().text();
+    // Allows users to optionally configure which endpoints are used, with a sensible default.
+    let api_endpoint = env::var("CLOUDFLAREDDNS_IPV4_API_ENDPOINT").unwrap_or("https://api.ipify.org".to_string());
+    
+    let response = reqwest::blocking::get(&api_endpoint).unwrap().text();
     return response
 }
 
