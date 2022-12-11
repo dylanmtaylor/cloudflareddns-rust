@@ -1,6 +1,5 @@
 use reqwest;
 
-#[feature(use_extern_macros)]
 extern crate serde_json;
 extern crate failure;
 use serde_json::json;
@@ -157,13 +156,17 @@ fn main() -> Result<(), failure::Error> {
         println!("Zone ID for zone {}: {}", zone, zone_id);
 
         if ipv4 {
-            create_or_update_record(&user, &api_key, &external_ipv4, host, "A", &zone_id);
-            println!("Successfully updated A record for {} in zone {} in CloudFlare to {}", host, zone, external_ipv4);
+            match create_or_update_record(&user, &api_key, &external_ipv4, host, "A", &zone_id) {
+                Ok(_) => println!("Successfully updated A record for {} in zone {} in CloudFlare to {}", host, zone, external_ipv4),
+                Err(e) => println!("Failed to create or update record: {}", e),
+            }            
         }
 
         if ipv6 {
-            create_or_update_record(&user, &api_key, &external_ipv6, host, "AAAA", &zone_id);
-            println!("Successfully updated AAAA record for {} in zone {} in CloudFlare to {}", host, zone, external_ipv6);
+            match create_or_update_record(&user, &api_key, &external_ipv4, host, "AAAA", &zone_id) {
+                Ok(_) => println!("Successfully updated AAAA record for {} in zone {} in CloudFlare to {}", host, zone, external_ipv6),
+                Err(e) => println!("Failed to create or update record: {}", e),
+            }      
         }
     }
 
