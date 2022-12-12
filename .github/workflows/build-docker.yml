@@ -1,6 +1,6 @@
-name: Docker Build
+name: Build Docker
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
