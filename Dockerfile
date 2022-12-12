@@ -14,7 +14,7 @@ ENV PATH=$PATH:/root/.cargo/bin
 COPY . /src
 
 # Build CloudflareDDNS as a release
-RUN cd /src && cargo build --release
+RUN cd /src && cargo build --release -Z sparse-registry
 
 # Set the working directory to where the binary was generated
 WORKDIR /src/target/release
