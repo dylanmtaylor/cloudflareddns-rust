@@ -259,8 +259,6 @@ fn main() -> Result<(), failure::Error> {
         return Err(format_err!(
             "Error: hosts and zones have different lengths. These need to match"
         ));
-    } else if hosts_vec.len() == 0 || zones_vec.len() == 0 {
-        return Err(format_err!("Error: hosts and zones must both be provided."));
     } else if hosts_vec.is_empty() || zones_vec.is_empty() {
         return Err(format_err!(
             "Error: hosts and zones must both not be empty."
