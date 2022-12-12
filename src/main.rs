@@ -214,7 +214,7 @@ fn check_ips_and_update_dns(
         }
 
         if ipv6 {
-            match create_or_update_record(user, api_key, &external_ipv4, host, "AAAA", &zone_id) {
+            match create_or_update_record(user, api_key, &external_ipv6, host, "AAAA", &zone_id) {
                 Ok(_) => println!(
                     "Successfully updated AAAA record for {} in zone {} in CloudFlare to {}",
                     host, zone, external_ipv6
