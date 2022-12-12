@@ -269,9 +269,10 @@ fn main() -> Result<(), failure::Error> {
 
     loop {
         check_ips_and_update_dns(&user, &api_key, &hosts_vec, &zones_vec, ipv4, ipv6)?;
-        if !repeat_interval > 0 {
+        if !(repeat_interval > 0) {
             break;
         }
+        println!("Done updating DNS. Sleeping for {} seconds ...", repeat_interval);
         thread::sleep(Duration::from_secs(repeat_interval));
     }
 
