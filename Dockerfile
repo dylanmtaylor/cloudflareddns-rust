@@ -13,8 +13,11 @@ ENV PATH=$PATH:/root/.cargo/bin
 # Copy files to the Docker image at /src
 COPY . /src
 
+# Switch Rust to the nightly build
+RUN rustup toolchain install nightly
+
 # Build CloudflareDDNS as a release
-RUN cd /src && cargo build --release -Z sparse-registry
+RUN cd /src && cargo +nightly build --release -Z sparse-registry
 
 # Set the working directory to where the binary was generated
 WORKDIR /src/target/release
