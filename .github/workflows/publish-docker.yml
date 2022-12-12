@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+   - cron: "0 0 * * *" # Runs every day at midnight to generate a new Docker image to capture upstream changes
 
 jobs:
   build-and-publish:
