@@ -36,14 +36,14 @@ pub fn get_external_ip(api_endpoint: &str) -> Result<std::string::String, failur
 pub fn get_external_ipv6() -> Result<std::string::String, failure::Error> {
     // Allows users to optionally configure which endpoints are used, with a sensible default.
     let api_endpoint = env::var("CLOUDFLAREDDNS_IPV6_API_ENDPOINT")
-        .unwrap_or("https://api6.ipify.org".to_string());
+        .unwrap_or_else(|_| "https://api6.ipify.org".to_string());
     get_external_ip(&api_endpoint)
 }
 
 pub fn get_external_ipv4() -> Result<std::string::String, failure::Error> {
     // Allows users to optionally configure which endpoints are used, with a sensible default.
-    let api_endpoint =
-        env::var("CLOUDFLAREDDNS_IPV4_API_ENDPOINT").unwrap_or("https://api.ipify.org".to_string());
+    let api_endpoint = env::var("CLOUDFLAREDDNS_IPV4_API_ENDPOINT")
+        .unwrap_or_else(|_| "https://api.ipify.org".to_string());
     get_external_ip(&api_endpoint)
 }
 
@@ -179,8 +179,8 @@ fn create_or_update_record(
 fn check_ips_and_update_dns(
     user: &str,
     api_key: &str,
-    hosts_vec: &Vec<&str>,
-    zones_vec: &Vec<&str>,
+    hosts_vec: &[&str],
+    zones_vec: &[&str],
     ipv4: bool,
     ipv6: bool,
 ) -> Result<(), failure::Error> {
@@ -236,7 +236,7 @@ fn main() -> Result<(), failure::Error> {
         .expect("CLOUDFLAREDDNS_RECORDTYPES environment variable not set");
     // Get repeat interval, with a default value of 0, which runs only once.
     let repeat_interval =
-        std::env::var("CLOUDFLAREDDNS_REPEAT_INTERVAL").unwrap_or("0".to_string());
+        std::env::var("CLOUDFLAREDDNS_REPEAT_INTERVAL").unwrap_or_else(|_| "0".to_string());
     // Parse this string value into a 64-bit unsigned integer.
     let repeat_interval: u64 = repeat_interval.parse().unwrap_or(0);
     let record_type_values = record_types.split(';').collect::<Vec<_>>();
