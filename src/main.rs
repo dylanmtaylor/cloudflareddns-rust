@@ -127,7 +127,7 @@ fn create_or_update_record(
             println!("POST URL: {}\nPOST body: {}", post_url, body);
 
             let res = client
-                .post(&url)
+                .post(&post_url)
                 .header("X-Auth-Email", user)
                 .header("X-Auth-Key", api_key)
                 .header("Content-Type", "application/json")
