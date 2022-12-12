@@ -1,5 +1,3 @@
-use reqwest;
-
 extern crate failure;
 extern crate serde_json;
 use failure::format_err;
@@ -21,17 +19,17 @@ pub fn get_external_ip(api_endpoint: &str) -> Result<std::string::String, failur
 
         if let Ok(_ip) = ip {
             // If parsing succeeded, return the IP address
-            return Ok(body);
+            Ok(body)
         } else {
             // If parsing failed, return an error
             println!("Error: {} is not a valid IP address.", body);
-            return Err(format_err!("Error: {} is not a valid IP address.", body));
+            Err(format_err!("Error: {} is not a valid IP address.", body))
         }
     } else {
-        return Err(format_err!(
+        Err(format_err!(
             "Error: Retrieving the IP address API endpoint failed: {}",
             res.error_for_status().unwrap_err()
-        ));
+        ))
     }
 }
 
@@ -39,14 +37,14 @@ pub fn get_external_ipv6() -> Result<std::string::String, failure::Error> {
     // Allows users to optionally configure which endpoints are used, with a sensible default.
     let api_endpoint = env::var("CLOUDFLAREDDNS_IPV6_API_ENDPOINT")
         .unwrap_or("https://api6.ipify.org".to_string());
-    return get_external_ip(&api_endpoint);
+    get_external_ip(&api_endpoint)
 }
 
 pub fn get_external_ipv4() -> Result<std::string::String, failure::Error> {
     // Allows users to optionally configure which endpoints are used, with a sensible default.
     let api_endpoint =
         env::var("CLOUDFLAREDDNS_IPV4_API_ENDPOINT").unwrap_or("https://api.ipify.org".to_string());
-    return get_external_ip(&api_endpoint);
+    get_external_ip(&api_endpoint)
 }
 
 fn get_zone_id(user: &str, api_key: &str, zone_name: &str) -> Result<String, reqwest::Error> {
@@ -111,69 +109,67 @@ fn create_or_update_record(
                 records[0]
             );
             Ok(())
-        } else {
-            if records.is_empty() {
-                // We need to create the record
-                let client = reqwest::blocking::Client::new();
-                let post_url = format!(
-                    "https://api.cloudflare.com/client/v4/zones/{}/dns_records",
-                    zone_id
-                );
-                let body = serde_json::json!({
-                    "type": record_type,
-                    "name": record_name,
-                    "content": ip,
-                    "ttl": 1,
-                    "proxied": false
-                });
+        } else if records.is_empty() {
+            // We need to create the record
+            let client = reqwest::blocking::Client::new();
+            let post_url = format!(
+                "https://api.cloudflare.com/client/v4/zones/{}/dns_records",
+                zone_id
+            );
+            let body = serde_json::json!({
+                "type": record_type,
+                "name": record_name,
+                "content": ip,
+                "ttl": 1,
+                "proxied": false
+            });
 
-                println!("POST URL: {}\nPOST body: {}", post_url, body);
+            println!("POST URL: {}\nPOST body: {}", post_url, body);
 
-                let res = client
-                    .post(&url)
-                    .header("X-Auth-Email", user)
-                    .header("X-Auth-Key", api_key)
-                    .header("Content-Type", "application/json")
-                    .json(&body)
-                    .send()?;
+            let res = client
+                .post(&url)
+                .header("X-Auth-Email", user)
+                .header("X-Auth-Key", api_key)
+                .header("Content-Type", "application/json")
+                .json(&body)
+                .send()?;
 
-                if res.status().is_success() {
-                    println!("Created a new record\n{}", res.text().unwrap());
-                    Ok(())
-                } else {
-                    println!("Failed to create record.");
-                    Err(res.error_for_status().unwrap_err())
-                }
-            } else {
-                // We need to put a new value in the record
-                let put_url = format!(
-                    "https://api.cloudflare.com/client/v4/zones/{}/dns_records/{}",
-                    zone_id,
-                    records[0]["id"].as_str().unwrap()
-                );
-
-                // Send a PUT request to the API endpoint
-                let body = json!({
-                    "type": record_type,
-                    "name": record_name,
-                    "content": ip,
-                    "ttl": 1,
-                    "proxied": false
-                });
-
-                println!("PUT URL: {}\nPUT body: {}", put_url, body);
-
-                let res = client
-                    .put(&put_url)
-                    .header("X-Auth-Email", user)
-                    .header("X-Auth-Key", api_key)
-                    .header("Content-Type", "application/json")
-                    .json(&body)
-                    .send()?;
-
-                println!("{}", res.text().unwrap());
+            if res.status().is_success() {
+                println!("Created a new record\n{}", res.text().unwrap());
                 Ok(())
+            } else {
+                println!("Failed to create record.");
+                Err(res.error_for_status().unwrap_err())
             }
+        } else {
+            // We need to put a new value in the record
+            let put_url = format!(
+                "https://api.cloudflare.com/client/v4/zones/{}/dns_records/{}",
+                zone_id,
+                records[0]["id"].as_str().unwrap()
+            );
+
+            // Send a PUT request to the API endpoint
+            let body = json!({
+                "type": record_type,
+                "name": record_name,
+                "content": ip,
+                "ttl": 1,
+                "proxied": false
+            });
+
+            println!("PUT URL: {}\nPUT body: {}", put_url, body);
+
+            let res = client
+                .put(&put_url)
+                .header("X-Auth-Email", user)
+                .header("X-Auth-Key", api_key)
+                .header("Content-Type", "application/json")
+                .json(&body)
+                .send()?;
+
+            println!("{}", res.text().unwrap());
+            Ok(())
         }
     } else {
         Err(res.error_for_status().unwrap_err())
@@ -204,11 +200,11 @@ fn check_ips_and_update_dns(
     // Iterate over an enumerated value of a tuple of the matching host and zone
     for (host, zone) in hosts_vec.iter().zip(zones_vec.iter()) {
         // Call the get_zone_id function to get the zone ID for the current host.
-        let zone_id = get_zone_id(&user, &api_key, zone)?;
+        let zone_id = get_zone_id(user, api_key, zone)?;
         println!("Zone ID for zone {}: {}", zone, zone_id);
 
         if ipv4 {
-            match create_or_update_record(&user, &api_key, &external_ipv4, host, "A", &zone_id) {
+            match create_or_update_record(user, api_key, &external_ipv4, host, "A", &zone_id) {
                 Ok(_) => println!(
                     "Successfully updated A record for {} in zone {} in CloudFlare to {}",
                     host, zone, external_ipv4
@@ -218,7 +214,7 @@ fn check_ips_and_update_dns(
         }
 
         if ipv6 {
-            match create_or_update_record(&user, &api_key, &external_ipv4, host, "AAAA", &zone_id) {
+            match create_or_update_record(user, api_key, &external_ipv4, host, "AAAA", &zone_id) {
                 Ok(_) => println!(
                     "Successfully updated AAAA record for {} in zone {} in CloudFlare to {}",
                     host, zone, external_ipv6
@@ -239,10 +235,11 @@ fn main() -> Result<(), failure::Error> {
     let record_types = std::env::var("CLOUDFLAREDDNS_RECORDTYPES")
         .expect("CLOUDFLAREDDNS_RECORDTYPES environment variable not set");
     // Get repeat interval, with a default value of 0, which runs only once.
-    let repeat_interval = std::env::var("CLOUDFLAREDDNS_REPEAT_INTERVAL").unwrap_or("0".to_string());
+    let repeat_interval =
+        std::env::var("CLOUDFLAREDDNS_REPEAT_INTERVAL").unwrap_or("0".to_string());
     // Parse this string value into a 64-bit unsigned integer.
     let repeat_interval: u64 = repeat_interval.parse().unwrap_or(0);
-    let record_type_values = record_types.split(";").collect::<Vec<_>>();
+    let record_type_values = record_types.split(';').collect::<Vec<_>>();
     let ipv4 = record_type_values.contains(&"A");
     let ipv6 = record_type_values.contains(&"AAAA");
     // host and zones as parallel arrays with elements at the same index expected to go together
@@ -251,8 +248,8 @@ fn main() -> Result<(), failure::Error> {
     let zones = std::env::var("CLOUDFLAREDDNS_ZONES")
         .expect("CLOUDFLAREDDNS_ZONES environment variable not set");
     // Split the hosts and zones strings on the semicolon character into vectors.
-    let hosts_vec = hosts.split(";").collect::<Vec<_>>();
-    let zones_vec = zones.split(";").collect::<Vec<_>>();
+    let hosts_vec = hosts.split(';').collect::<Vec<_>>();
+    let zones_vec = zones.split(';').collect::<Vec<_>>();
 
     // If the lengths of hosts and zones not equal, return an error.
     if hosts_vec.len() != zones_vec.len() {
@@ -267,10 +264,13 @@ fn main() -> Result<(), failure::Error> {
 
     loop {
         check_ips_and_update_dns(&user, &api_key, &hosts_vec, &zones_vec, ipv4, ipv6)?;
-        if !(repeat_interval > 0) {
+        if repeat_interval <= 0 {
             break;
         }
-        println!("Done updating DNS. Sleeping for {} seconds ...", repeat_interval);
+        println!(
+            "Done updating DNS. Sleeping for {} seconds ...",
+            repeat_interval
+        );
         thread::sleep(Duration::from_secs(repeat_interval));
     }
 
