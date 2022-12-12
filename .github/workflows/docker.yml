@@ -3,7 +3,7 @@ name: Docker Build
 on: [push]
 
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
